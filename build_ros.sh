@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Building ROS nodes"
 
 cd Examples/ROS/ORB_SLAM3
