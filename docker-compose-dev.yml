@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  monocular:
+    image: crosdev
+    container_name: orbslam
+    volumes:
+      - .:/home/dev/orbslam
+    ports:
+      - "7000:22" # SSH
+      - "7001:5900" # VNC
+      - "7002:80" # HTML
+      - "7003:8000" # GDB
