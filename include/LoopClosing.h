@@ -222,8 +222,9 @@ protected:
     // Fix scale in the stereo/RGB-D case
     bool mbFixScale;
 
-
-    bool mnFullBAIdx;
+    // CHANGED
+    // bool mnFullBAIdx;
+    int mnFullBAIdx;
 
 
 
