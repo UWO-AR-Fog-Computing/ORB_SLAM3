@@ -241,6 +241,55 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
+System::System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* settings_,  const bool bUseViewer, const int initFr) :
+    mSensor(sensor), mpVocabulary(mpVocabulary), mpKeyFrameDatabase(mpKeyFrameDatabase), mpAtlas(mpAtlas), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
+    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false), settings_(settings_) {
+    
+    // Fix verbosity
+    Verbose::SetTh(Verbose::VERBOSITY_QUIET);
+
+    //Create Drawers. These are used by the Viewer
+    mpFrameDrawer = new FrameDrawer(mpAtlas);
+    mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
+
+    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                            mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, std::string());
+
+    //Initialize the Local Mapping thread and launch
+    mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor==MONOCULAR || mSensor==IMU_MONOCULAR,
+                                     mSensor==IMU_MONOCULAR || mSensor==IMU_STEREO || mSensor==IMU_RGBD, std::string());
+    mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
+    mpLocalMapper->mInitFr = initFr;
+    if(settings_)
+        mpLocalMapper->mThFarPoints = settings_->thFarPoints();
+    // else
+    //     mpLocalMapper->mThFarPoints = thFarPoints;
+    if(mpLocalMapper->mThFarPoints!=0)
+    {
+        cout << "Discard points further than " << mpLocalMapper->mThFarPoints << " m from current camera" << endl;
+        mpLocalMapper->mbFarPoints = true;
+    }
+    else
+        mpLocalMapper->mbFarPoints = false;
+
+    mpTracker->SetLocalMapper(mpLocalMapper);
+    mpLocalMapper->SetTracker(mpTracker);
+
+    //Initialize the Viewer thread and launch
+    if(bUseViewer)
+    //if(false) // TODO
+    {
+        mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile,settings_);
+        mptViewer = new thread(&Viewer::Run, mpViewer);
+        mpTracker->SetViewer(mpViewer);
+        // mpLoopCloser->mpViewer = mpViewer;
+        mpViewer->both = mpFrameDrawer->both;
+    }
+
+    // Fix verbosity
+    Verbose::SetTh(Verbose::VERBOSITY_QUIET);
+}
+
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
