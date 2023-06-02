@@ -192,6 +192,13 @@ public:
     vector<double> vdTrackTotal_ms;
 #endif
 
+    
+    //Drawers
+    Viewer* mpViewer;
+    FrameDrawer* mpFrameDrawer;
+    MapDrawer* mpMapDrawer;
+    bool bStepByStep;
+
 protected:
 
     // Main tracking function. It is independent of the input sensor.
@@ -276,12 +283,6 @@ protected:
     
     // System
     System* mpSystem;
-    
-    //Drawers
-    Viewer* mpViewer;
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
-    bool bStepByStep;
 
     //Atlas
     Atlas* mpAtlas;

@@ -29,6 +29,8 @@
 #include "MLPnPsolver.h"
 #include "GeometricTools.h"
 
+#include "rclcpp/rclcpp.hpp"
+
 #include <iostream>
 
 #include <mutex>
@@ -100,6 +102,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     vector<GeometricCamera*> vpCams = mpAtlas->GetAllCameras();
     std::cout << "There are " << vpCams.size() << " cameras in the atlas" << std::endl;
+    RCLCPP_INFO(rclcpp::get_logger("tracker"),"There are %d cameras in the atlas",vpCams.size());
     for(GeometricCamera* pCam : vpCams)
     {
         std::cout << "Camera " << pCam->GetId();
@@ -1809,7 +1812,7 @@ void Tracking::Track()
         return;
     }
 
-    Map* pCurrentMap = mpAtlas->GetCurrentMap();
+    Map* pCurrentMap = mpAtlas->GetCurrentMap(); // MARKER
     if(!pCurrentMap)
     {
         cout << "ERROR: There is not an active map in the atlas" << endl;
@@ -1900,7 +1903,7 @@ void Tracking::Track()
     {
         if(mSensor==System::STEREO || mSensor==System::RGBD || mSensor==System::IMU_STEREO || mSensor==System::IMU_RGBD)
         {
-            StereoInitialization();
+            StereoInitialization(); 
         }
         else
         {

@@ -226,27 +226,24 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //usleep(10*1000*1000);
 
     //Initialize the Viewer thread and launch
-    if(bUseViewer)
-    //if(false) // TODO
-    {
-        mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile,settings_);
-        mptViewer = new thread(&Viewer::Run, mpViewer);
-        mpTracker->SetViewer(mpViewer);
-        mpLoopCloser->mpViewer = mpViewer;
-        mpViewer->both = mpFrameDrawer->both;
-    }
+    // if(bUseViewer)
+    // //if(false) // TODO
+    // {
+    //     mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile,settings_);
+    //     mptViewer = new thread(&Viewer::Run, mpViewer);
+    //     mpTracker->SetViewer(mpViewer);
+    //     mpLoopCloser->mpViewer = mpViewer;
+    //     mpViewer->both = mpFrameDrawer->both;
+    // }
 
     // Fix verbosity
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
 }
 
-System::System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* settings_,  const bool bUseViewer, const int initFr) :
+System::System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* settings_, LoopClosing* mpLoopCloser, string windowName, const bool bUseViewer, const int initFr) :
     mSensor(sensor), mpVocabulary(mpVocabulary), mpKeyFrameDatabase(mpKeyFrameDatabase), mpAtlas(mpAtlas), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
-    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false), settings_(settings_) {
-    
-    // Fix verbosity
-    Verbose::SetTh(Verbose::VERBOSITY_QUIET);
+    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false), settings_(settings_), mpLoopCloser(mpLoopCloser) {
 
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpAtlas);
@@ -272,17 +269,27 @@ System::System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameData
     else
         mpLocalMapper->mbFarPoints = false;
 
-    mpTracker->SetLocalMapper(mpLocalMapper);
-    mpLocalMapper->SetTracker(mpTracker);
+    // bool activeLC = true;
+    // mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
+    // mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
-    //Initialize the Viewer thread and launch
+    mpTracker->SetLocalMapper(mpLocalMapper);
+    mpTracker->SetLoopClosing(mpLoopCloser);
+
+    mpLocalMapper->SetTracker(mpTracker);
+    mpLocalMapper->SetLoopCloser(mpLoopCloser);
+
+    mpLoopCloser->SetTracker(mpTracker);
+    mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+    // Initialize the Viewer thread and launch
     if(bUseViewer)
     //if(false) // TODO
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile,settings_);
-        mptViewer = new thread(&Viewer::Run, mpViewer);
+        mptViewer = new thread(&Viewer::Run, mpViewer, windowName);
         mpTracker->SetViewer(mpViewer);
-        // mpLoopCloser->mpViewer = mpViewer;
+        mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
     }
 

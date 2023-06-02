@@ -103,7 +103,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
     System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
-    System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* _settings,  const bool bUseViewer = true, const int initFr = 0);
+    System(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* _settings, LoopClosing* mpLoopCloser, string windowName, const bool bUseViewer = true, const int initFr = 0);
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -193,6 +193,24 @@ public:
     void InsertTrackTime(double& time);
 #endif
 
+    // Tracker. It receives a frame and computes the associated camera pose.
+    // It also decides when to insert a new keyframe, create some new MapPoints and
+    // performs relocalization if tracking fails.
+    Tracking* mpTracker;
+
+    // Local Mapper. It manages the local map and performs local bundle adjustment.
+    LocalMapping* mpLocalMapper;
+
+    // Loop Closer. It searches loops with every new keyframe. If there is a loop it performs
+    // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
+    LoopClosing* mpLoopCloser;
+
+    // The viewer draws the map and the current camera pose. It uses Pangolin.
+    Viewer* mpViewer;
+
+    FrameDrawer* mpFrameDrawer;
+    MapDrawer* mpMapDrawer;
+
 private:
 
     void SaveAtlas(int type);
@@ -213,23 +231,7 @@ private:
     //Map* mpMap;
     Atlas* mpAtlas;
 
-    // Tracker. It receives a frame and computes the associated camera pose.
-    // It also decides when to insert a new keyframe, create some new MapPoints and
-    // performs relocalization if tracking fails.
-    Tracking* mpTracker;
 
-    // Local Mapper. It manages the local map and performs local bundle adjustment.
-    LocalMapping* mpLocalMapper;
-
-    // Loop Closer. It searches loops with every new keyframe. If there is a loop it performs
-    // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
-    LoopClosing* mpLoopCloser;
-
-    // The viewer draws the map and the current camera pose. It uses Pangolin.
-    Viewer* mpViewer;
-
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
 
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.

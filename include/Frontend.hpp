@@ -14,7 +14,7 @@ namespace ORB_SLAM3 {
     class Frontend : public System {
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-            Frontend(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* _settings);
+            Frontend(System::eSensor sensor, ORBVocabulary* mpVocabulary, KeyFrameDatabase* mpKeyFrameDatabase, Atlas* mpAtlas, const string &strSettingsFile, Settings* _settings, LoopClosing* mpLoopCloser, string windowName);
 
         // private:
 
